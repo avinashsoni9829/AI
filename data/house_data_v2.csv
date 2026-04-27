@@ -1,0 +1,16 @@
+size_sqft,bedrooms,bathrooms,location,property_age,has_parking,distance_to_metro_km,price
+800,1,1,Bangalore,10,1,2.0,40
+1000,2,2,Bangalore,5,1,1.5,55
+1200,2,2,Delhi,8,0,3.0,60
+1500,3,2,Mumbai,12,1,1.0,85
+1800,3,3,Bangalore,7,1,0.8,100
+2000,4,3,Delhi,6,1,2.5,120
+2200,4,3,Mumbai,9,1,1.2,135
+2500,4,4,Bangalore,4,1,0.5,155
+2800,5,4,Delhi,3,1,1.8,180
+3000,5,5,Mumbai,2,1,0.6,210
+1100,2,2,Bangalore,6,0,2.2,58
+1300,2,2,Delhi,7,1,2.9,68
+1600,3,3,Mumbai,10,1,1.4,90
+1900,3,3,Bangalore,8,1,0.9,105
+2100,4,3,Delhi,5,1,2.3,125
