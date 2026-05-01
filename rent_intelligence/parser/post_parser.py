@@ -9,7 +9,7 @@ KNOWN_AREAS = [
     "Rajajinagar", "Halasuru", "Ulsoor", "AECS Layout",
     "Kasavanahalli", "Kadubeesanahalli", "Mahadevpura",
     "Cooke Town", "Yeshwanthpur", "Peenya", "Hennur", "Kalyan Nagar",
-    "JP Nagar", "Madivala", "CV Raman Nagar"
+    "JP Nagar", "Madivala", "CV Raman Nagar","𝗕𝗼𝗺𝗺𝗮𝗻𝗮𝗵𝗮𝗹𝗹𝗶 𝗛𝗼𝗻𝗴𝗮𝘀𝗻𝗱𝗿𝗮"
 ]
 
 

@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Rent Data Admin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      margin-bottom: 20px;
+    }
+
+    textarea {
+      width: 100%;
+      height: 160px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 8px;
+      background: #111827;
+      color: white;
+      cursor: pointer;
+      margin: 4px;
+    }
+
+    button.secondary { background: #2563eb; }
+    button.success { background: #059669; }
+    button.danger { background: #dc2626; }
+    button.light { background: #6b7280; }
+
+    select, input {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th, td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: bold;
+    }
+
+    tr:hover {
+      background: #f3f4f6;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      display: inline-block;
+    }
+
+    .parsed { background: #dcfce7; color: #166534; }
+    .review { background: #fee2e2; color: #991b1b; }
+
+    .pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+    }
+
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 10;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      width: 760px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow: auto;
+      background: white;
+      border-radius: 16px;
+      padding: 22px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    label {
+      font-size: 13px;
+      font-weight: bold;
+      color: #374151;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .raw-box {
+      margin-top: 14px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      border-radius: 10px;
+      max-height: 150px;
+      overflow: auto;
+      font-size: 12px;
+      color: #4b5563;
+    }
+
+    .actions {
+      margin-top: 18px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Rent Data Admin</h1>
+
+  <div class="card">
+    <h2>Add Posts</h2>
+    <p>Single ya bulk posts paste karo. Bulk ke liye posts ko <b>===</b> se separate karo.</p>
+
+    <textarea id="rawText" placeholder="Paste rental post text here..."></textarea>
+
+    <br>
+    <button onclick="parseSingle()">Parse Single + Save</button>
+    <button class="secondary" onclick="parseBulk()">Bulk Parse + Save</button>
+
+    <div id="parseResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>Saved Posts</h2>
+
+    <div class="filters">
+      <select id="statusFilter" onchange="resetAndLoad()">
+        <option value="">All Status</option>
+        <option value="parsed">Parsed</option>
+        <option value="needs_review">Needs Review</option>
+      </select>
+
+      <select id="typeFilter" onchange="resetAndLoad()">
+        <option value="">All Types</option>
+        <option value="room_available">Room Available</option>
+        <option value="full_flat">Full Flat</option>
+        <option value="pg_room">PG Room</option>
+        <option value="looking_for_flat">Looking For Flat</option>
+        <option value="unknown">Unknown</option>
+      </select>
+
+      <input id="searchBox" placeholder="Search area/city..." oninput="resetAndLoad()">
+
+      <select id="pageSize" onchange="resetAndLoad()">
+        <option value="10">10/page</option>
+        <option value="20">20/page</option>
+        <option value="50">50/page</option>
+      </select>
+
+      <button onclick="loadPosts()">Refresh</button>
+    </div>
+    <div id="stats" style="margin-bottom: 16px;"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Area</th>
+          <th>BHK</th>
+          <th>Rent</th>
+          <th>Deposit</th>
+          <th>Type</th>
+          <th>Furnishing</th>
+          <th>Confidence</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <div class="pagination">
+      <div id="pageInfo">Page 1</div>
+      <div>
+        <button class="light" onclick="prevPage()">Prev</button>
+        <button class="light" onclick="nextPage()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Edit Record</h2>
+        <button class="light" onclick="closeModal()">X</button>
+      </div>
+
+      <div class="form-grid" id="editForm"></div>
+
+      <div>
+        <h4>Raw Text</h4>
+        <div class="raw-box" id="rawTextBox"></div>
+      </div>
+
+      <div class="actions">
+        <button class="danger" onclick="deleteCurrentPost()">Delete</button>
+        <button class="light" onclick="closeModal()">Cancel</button>
+        <button class="success" onclick="saveCurrentPost()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allPosts = [];
+    let filteredPosts = [];
+    let currentPage = 1;
+    let currentEditingPost = null;
+
+    async function parseSingle() {
+      const rawText = document.getElementById("rawText").value;
+
+      const res = await fetch(`/rental-posts/parse`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          raw_text: rawText,
+          save: true
+        })
+      });
+
+      const data = await res.json();
+      document.getElementById("parseResult").innerHTML =
+        `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+      await loadPosts();
+    }
+
+    async function parseBulk() {
+      const rawText = document.getElementById("rawText").value;
+
+      const res = await fetch(`/rental-posts/bulk-parse`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          raw_text: rawText,
+          separator: "===",
+          save: true
+        })
+      });
+
+      const data = await res.json();
+      document.getElementById("parseResult").innerHTML =
+        `<pre>Total processed: ${data.total_received}</pre>`;
+
+      await loadPosts();
+    }
+
+    async function loadStats() {
+  const res = await fetch(`/rental-posts/stats`);
+  const data = await res.json();
+
+  const statsDiv = document.getElementById("stats");
+
+  statsDiv.innerHTML = `
+    <div style="display:flex; gap:20px; flex-wrap:wrap;">
+      
+      <div style="background:#111827;color:white;padding:12px 16px;border-radius:10px;">
+        Total Records<br><b>${data.total_records}</b>
+      </div>
+
+      <div style="background:#059669;color:white;padding:12px 16px;border-radius:10px;">
+        Ready for Training<br><b>${data.ready_for_training}</b>
+      </div>
+
+      <div style="background:#2563eb;color:white;padding:12px 16px;border-radius:10px;">
+        Room Available<br><b>${data.breakdown.room_available || 0}</b>
+      </div>
+
+      <div style="background:#9333ea;color:white;padding:12px 16px;border-radius:10px;">
+        Full Flat<br><b>${data.breakdown.full_flat || 0}</b>
+      </div>
+
+    </div>
+  `;
+}
+
+    async function loadPosts() {
+        await loadStats();
+      const status = document.getElementById("statusFilter").value;
+
+      let url = `/rental-posts?limit=1000`;
+      if (status) url += `&status=${status}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+
+      allPosts = data.posts || [];
+      applyFilters();
+      renderTable();
+    }
+
+    function resetAndLoad() {
+      currentPage = 1;
+      applyFilters();
+      renderTable();
+    }
+
+    function applyFilters() {
+      const type = document.getElementById("typeFilter").value;
+      const search = document.getElementById("searchBox").value.toLowerCase();
+
+      filteredPosts = allPosts.filter(post => {
+        const typeOk = !type || post.listing_type === type;
+
+        const searchOk =
+          !search ||
+          String(post.area || "").toLowerCase().includes(search) ||
+          String(post.city || "").toLowerCase().includes(search) ||
+          String(post.raw_text_anonymized || "").toLowerCase().includes(search);
+
+        return typeOk && searchOk;
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      const size = Number(document.getElementById("pageSize").value);
+      const totalPages = Math.max(1, Math.ceil(filteredPosts.length / size));
+
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const start = (currentPage - 1) * size;
+      const rows = filteredPosts.slice(start, start + size);
+
+      rows.forEach(post => {
+        const tr = document.createElement("tr");
+
+        const statusClass = post.status === "parsed" ? "parsed" : "review";
+
+        tr.innerHTML = `
+          <td>${post.id}</td>
+          <td>${post.area || "-"}</td>
+          <td>${post.bhk ?? "-"}</td>
+          <td>₹${post.rent ?? "-"}</td>
+          <td>₹${post.deposit ?? "-"}</td>
+          <td>${post.listing_type || "-"}</td>
+          <td>${post.furnishing || "-"}</td>
+          <td>${post.confidence ?? "-"}</td>
+          <td><span class="badge ${statusClass}">${post.status}</span></td>
+          <td>
+            <button class="secondary" onclick="openEditModal(${post.id})">Edit</button>
+          </td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("pageInfo").innerText =
+        `Page ${currentPage} of ${totalPages} | Total ${filteredPosts.length}`;
+    }
+
+    function prevPage() {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    }
+
+    function nextPage() {
+      const size = Number(document.getElementById("pageSize").value);
+      const totalPages = Math.max(1, Math.ceil(filteredPosts.length / size));
+
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderTable();
+      }
+    }
+
+    function openEditModal(id) {
+      currentEditingPost = allPosts.find(p => p.id === id);
+
+      if (!currentEditingPost) return;
+
+      document.getElementById("modalTitle").innerText = `Edit Record #${id}`;
+
+      const fields = [
+        "city",
+        "area",
+        "bhk",
+        "rent",
+        "deposit",
+        "furnishing",
+        "property_type",
+        "listing_type",
+        "gender_preference",
+        "available_from",
+        "confidence",
+        "status"
+      ];
+
+      const form = document.getElementById("editForm");
+      form.innerHTML = "";
+
+      fields.forEach(field => {
+        const div = document.createElement("div");
+
+        div.innerHTML = `
+          <label>${field}</label>
+          ${renderInput(field, currentEditingPost[field])}
+        `;
+
+        form.appendChild(div);
+      });
+
+      document.getElementById("rawTextBox").innerText =
+        currentEditingPost.raw_text_anonymized || "";
+
+      document.getElementById("modalBackdrop").style.display = "flex";
+    }
+
+    function renderInput(field, value) {
+      if (field === "listing_type") {
+        return `
+          <select data-field="${field}">
+            ${option("room_available", value)}
+            ${option("full_flat", value)}
+            ${option("pg_room", value)}
+            ${option("looking_for_flat", value)}
+            ${option("unknown", value)}
+          </select>
+        `;
+      }
+
+      if (field === "status") {
+        return `
+          <select data-field="${field}">
+            ${option("parsed", value)}
+            ${option("needs_review", value)}
+          </select>
+        `;
+      }
+
+      if (field === "furnishing") {
+        return `
+          <select data-field="${field}">
+            ${option("Unknown", value)}
+            ${option("Fully Furnished", value)}
+            ${option("Semi Furnished", value)}
+            ${option("Unfurnished", value)}
+          </select>
+        `;
+      }
+
+      if (field === "property_type") {
+        return `
+          <select data-field="${field}">
+            ${option("Apartment", value)}
+            ${option("Villa", value)}
+            ${option("Duplex", value)}
+            ${option("Penthouse", value)}
+            ${option("PG", value)}
+            ${option("RK", value)}
+          </select>
+        `;
+      }
+
+      if (field === "gender_preference") {
+        return `
+          <select data-field="${field}">
+            ${option("Any", value)}
+            ${option("Male", value)}
+            ${option("Female", value)}
+          </select>
+        `;
+      }
+
+      return `<input data-field="${field}" value="${value ?? ""}">`;
+    }
+
+    function option(value, selectedValue) {
+      return `<option value="${value}" ${value === selectedValue ? "selected" : ""}>${value}</option>`;
+    }
+
+    function closeModal() {
+      document.getElementById("modalBackdrop").style.display = "none";
+      currentEditingPost = null;
+    }
+
+    async function saveCurrentPost() {
+      if (!currentEditingPost) return;
+
+      const inputs = document.querySelectorAll("#editForm input, #editForm select");
+      const payload = {};
+
+      inputs.forEach(input => {
+        const key = input.dataset.field;
+        let value = input.value;
+
+        if (["bhk", "rent", "deposit"].includes(key)) {
+          value = value === "" ? null : Number(value);
+        }
+
+        if (key === "confidence") {
+          value = value === "" ? null : Number(value);
+        }
+
+        payload[key] = value;
+      });
+
+      await fetch(`/rental-posts/${currentEditingPost.id}`, {
+        method: "PUT",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(payload)
+      });
+
+      closeModal();
+      await loadPosts();
+    }
+
+    async function deleteCurrentPost() {
+      if (!currentEditingPost) return;
+
+      if (!confirm("Delete this record?")) return;
+
+      await fetch(`/rental-posts/${currentEditingPost.id}`, {
+        method: "DELETE"
+      });
+
+      closeModal();
+      await loadPosts();
+    }
+
+    loadPosts();
+  </script>
+</body>
+</html>

@@ -112,3 +112,49 @@ def fetch_posts(limit: int = 20, status: str | None = None):
     conn.close()
 
     return rows
+
+def update_post(post_id: int, updates: dict):
+    init_db()
+
+    allowed_fields = {
+        "city", "area", "bhk", "rent", "deposit",
+        "furnishing", "property_type", "listing_type",
+        "gender_preference", "available_from",
+        "confidence", "status"
+    }
+
+    fields = []
+    values = []
+
+    for key, value in updates.items():
+        if key in allowed_fields:
+            fields.append(f"{key} = ?")
+            values.append(value)
+
+    if not fields:
+        return
+
+    values.append(post_id)
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        f"UPDATE rental_posts SET {', '.join(fields)} WHERE id = ?",
+        values
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def delete_post(post_id: int):
+    init_db()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM rental_posts WHERE id = ?", (post_id,))
+
+    conn.commit()
+    conn.close()
