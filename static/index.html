@@ -179,6 +179,12 @@
         <option value="Delhi">Delhi</option>
         <option value="Mumbai">Mumbai</option>
       </select>
+      <label>Property Type</label>
+<select id="property_type">
+  <option value="Apartment">Apartment</option>
+  <option value="Builder Floor">Builder Floor</option>
+  <option value="Villa">Villa</option>
+</select>
 
       <label>Property Age: <span id="ageVal">5</span> years</label>
       <input type="range" id="property_age" min="0" max="100" value="5">
@@ -250,6 +256,7 @@
     function updateLabels() {
       document.getElementById("sizeVal").innerText = document.getElementById("size_sqft").value;
       document.getElementById("bedVal").innerText = document.getElementById("bedrooms").value;
+      
       document.getElementById("bathVal").innerText = document.getElementById("bathrooms").value;
       document.getElementById("ageVal").innerText = document.getElementById("property_age").value;
       document.getElementById("distVal").innerText = document.getElementById("distance_to_metro_km").value;
@@ -284,6 +291,7 @@
         bedrooms: bedrooms,
         bathrooms: Number(document.getElementById("bathrooms").value),
         location: document.getElementById("location").value,
+        property_type: document.getElementById("property_type").value,
         property_age: Number(document.getElementById("property_age").value),
         has_parking: Number(document.getElementById("has_parking").value),
         distance_to_metro_km: Number(document.getElementById("distance_to_metro_km").value)

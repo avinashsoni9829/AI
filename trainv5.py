@@ -47,7 +47,7 @@ numeric_features = [
 
 
 categorical_features = [
-    "location", "has_parking","age_bucket","distance_bucket"
+    "location",     "property_type","has_parking","age_bucket","distance_bucket"
 ]
 
 
