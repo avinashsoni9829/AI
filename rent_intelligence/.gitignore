@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+
+# Data
+data/
+rent_intelligence/data/
+
+# Models
+models/
+*.pkl
+
+# Logs
+logs/
+
+# OS
+.DS_Store
