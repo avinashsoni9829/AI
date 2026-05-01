@@ -32,6 +32,7 @@ def init_db():
             deposit INTEGER,
             furnishing TEXT,
             property_type TEXT,
+            listing_type TEXT,
             gender_preference TEXT,
             available_from TEXT,
             confidence REAL,
@@ -39,6 +40,11 @@ def init_db():
             created_at TEXT
         )
     """)
+    cur.execute("PRAGMA table_info(rental_posts)")
+    columns = [row[1] for row in cur.fetchall()]
+
+    if "listing_type" not in columns:
+        cur.execute("ALTER TABLE rental_posts ADD COLUMN listing_type TEXT")
 
     conn.commit()
     conn.close()
@@ -53,10 +59,10 @@ def insert_post(parsed: dict):
     cur.execute("""
         INSERT INTO rental_posts (
             source, raw_text_anonymized, city, area, bhk, rent, deposit,
-            furnishing, property_type, gender_preference, available_from,
-            confidence, status, created_at
+            furnishing, property_type, listing_type, gender_preference,
+            available_from, confidence, status, created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         parsed.get("source"),
         parsed.get("raw_text_anonymized"),
@@ -67,6 +73,7 @@ def insert_post(parsed: dict):
         parsed.get("deposit"),
         parsed.get("furnishing"),
         parsed.get("property_type"),
+        parsed.get("listing_type"),
         parsed.get("gender_preference"),
         parsed.get("available_from"),
         parsed.get("confidence"),

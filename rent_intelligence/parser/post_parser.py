@@ -13,6 +13,69 @@ KNOWN_AREAS = [
 ]
 
 
+def extract_listing_type(text: str):
+    lower = text.lower()
+
+    looking_keywords = [
+        "looking for a place",
+        "looking for place",
+        "looking for leads",
+        "i am looking",
+        "i'm looking",
+        "need a place",
+    ]
+
+    if any(k in lower for k in looking_keywords):
+        return "looking_for_flat"
+
+    pg_keywords = [
+        "pg",
+        "single occupancy",
+        "twin sharing",
+        "per bed",
+        "serviced rooms",
+        "private rooms",
+    ]
+
+    if any(k in lower for k in pg_keywords):
+        return "pg_room"
+
+    room_keywords = [
+        "flatmate",
+        "roommate",
+        "replacement",
+        "1 room available",
+        "one room available",
+        "room available",
+        "private room",
+        "master bedroom",
+        "bedroom available",
+        "male flatmate",
+        "female flatmate",
+        "take over my room",
+    ]
+
+    if any(k in lower for k in room_keywords):
+        return "room_available"
+
+    full_flat_keywords = [
+        "entire flat",
+        "full flat",
+        "2bhk for rent",
+        "2 bhk for rent",
+        "3bhk for rent",
+        "3 bhk for rent",
+        "1bhk for rent",
+        "1 bhk for rent",
+        "direct owner listing",
+        "for rent in",
+    ]
+
+    if any(k in lower for k in full_flat_keywords):
+        return "full_flat"
+
+    return "unknown"
+
 
 def anonymize_text(text: str) -> str:
     text = re.sub(r"\+?\d[\d\s\-]{8,}\d", "[PHONE_REMOVED]", text)
@@ -131,8 +194,11 @@ def extract_property_type(text: str):
     if "penthouse" in lower:
         return "Penthouse"
 
-    if "rk" in lower:
+    if re.search(r"\b[1-9]?\s*rk\b", lower):
         return "RK"
+
+    if "pg" in lower or "serviced room" in lower:
+        return "PG"
 
     return "Apartment"
 
@@ -185,6 +251,8 @@ def calculate_confidence(parsed: dict):
         score += 0.05
     if parsed.get("available_from"):
         score += 0.05
+    if parsed.get("listing_type") and parsed.get("listing_type") != "unknown":
+        score += 0.10
 
     return round(min(score, 1.0), 2)
 
@@ -197,6 +265,7 @@ def parse_rental_post(raw_text: str):
         "city": "Bangalore",
         "area": extract_area(raw_text),
         "bhk": extract_bhk(raw_text),
+        "listing_type": extract_listing_type(raw_text),
         "rent": extract_rent(raw_text),
         "deposit": extract_deposit(raw_text),
         "furnishing": extract_furnishing(raw_text),

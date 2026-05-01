@@ -17,6 +17,12 @@ print(df.isnull().sum())
 print("\nStatus counts:")
 print(df["status"].value_counts(dropna=False))
 
+if "listing_type" in df.columns:
+    print("\nListing type counts:")
+    print(df["listing_type"].value_counts(dropna=False))
+else:
+    print("\nListing type counts: (no listing_type column)")
+
 print("\nConfidence summary:")
 print(df["confidence"].describe())
 
@@ -28,5 +34,12 @@ usable = df[
     (df["confidence"] >= 0.6)
 ]
 
-print(usable[["area", "bhk", "rent", "deposit", "furnishing", "property_type", "confidence"]].head(20))
+cols = ["area", "bhk", "rent", "deposit", "furnishing", "property_type", "confidence"]
+if "listing_type" in usable.columns:
+    cols.append("listing_type")
+print(usable[cols].head(20))
 print("\nUsable rows:", len(usable))
+
+if "listing_type" in usable.columns:
+    print("\nUsable rows by listing type:")
+    print(usable["listing_type"].value_counts(dropna=False))
