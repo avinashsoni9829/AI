@@ -14,6 +14,8 @@ from xgboost import XGBRegressor
 
 from sklearn.metrics import mean_absolute_error , r2_score
 
+import shap
+
 df = pd.read_csv("data/house_data_big.csv")
 
 ## adding new features 
@@ -128,3 +130,14 @@ else:
 
 for name, value in zip(feature_names, values):
     print(name, value)
+
+X_processed = preprocessor.transform(X_test)
+feature_names = preprocessor.get_feature_names_out()
+
+explainer = shap.Explainer(model)
+shap_values = explainer(X_processed)
+
+shap_values.feature_names = list(feature_names)
+
+shap.plots.waterfall(shap_values[0])
+shap.plots.bar(shap_values)
