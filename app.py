@@ -4,6 +4,8 @@ import shap
 
 from fastapi import FastAPI
 from pydantic import BaseModel, Field, model_validator
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 app = FastAPI(title="House Price Prediction API V3")
 
@@ -14,6 +16,12 @@ model = pipeline.named_steps["model"]
 feature_names = list(preprocessor.get_feature_names_out())
 
 explainer = shap.Explainer(model)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+@app.get("/ui")
+def ui():
+    return FileResponse("static/index.html")
 
 class HouseInput(BaseModel):
     size_sqft: int = Field(..., ge=200, le=10000)

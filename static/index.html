@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>House Price Predictor</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #eef2ff, #f8fafc);
+      padding: 35px;
+    }
+
+    .page {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .card {
+      background: white;
+      padding: 24px;
+      border-radius: 20px;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    }
+
+    h2, h3 {
+      margin-top: 0;
+    }
+
+    label {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+
+    input[type="range"], select {
+      width: 100%;
+      margin-top: 8px;
+    }
+
+    select {
+      padding: 10px;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .price {
+      font-size: 42px;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: all 0.25s ease;
+    }
+
+    .pulse {
+      transform: scale(1.05);
+      color: #047857;
+    }
+
+    .error {
+      color: #b91c1c;
+      background: #fee2e2;
+      padding: 12px;
+      border-radius: 10px;
+      display: none;
+    }
+
+    .hint {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .gauge-bg {
+      height: 18px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      margin-top: 15px;
+      overflow: hidden;
+    }
+
+    .gauge-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #22c55e, #f59e0b, #ef4444);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .reason {
+      margin-top: 14px;
+    }
+
+    .reason-title {
+      display: flex;
+      justify-content: space-between;
+      font-size: 14px;
+      margin-bottom: 5px;
+    }
+
+    .bar-bg {
+      height: 10px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #2563eb;
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .bar-negative {
+      background: #dc2626;
+    }
+
+    .mini-chart {
+      display: flex;
+      align-items: end;
+      gap: 6px;
+      height: 120px;
+      margin-top: 15px;
+      padding: 10px;
+      background: #f9fafb;
+      border-radius: 14px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      background: #6366f1;
+      border-radius: 8px 8px 0 0;
+      min-height: 6px;
+      transition: height 0.4s ease;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .stat {
+      background: #f3f4f6;
+      padding: 12px;
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <div class="card">
+      <h2>House Price Predictor</h2>
+      <p class="hint">Drag sliders and prediction will update live.</p>
+
+      <label>Size: <span id="sizeVal">1400</span> sqft</label>
+      <input type="range" id="size_sqft" min="200" max="10000" value="1400" step="50">
+
+      <label>Bedrooms: <span id="bedVal">3</span></label>
+      <input type="range" id="bedrooms" min="1" max="10" value="3">
+
+      <label>Bathrooms: <span id="bathVal">2</span></label>
+      <input type="range" id="bathrooms" min="1" max="10" value="2">
+
+      <label>Location</label>
+      <select id="location">
+        <option value="Bangalore">Bangalore</option>
+        <option value="Delhi">Delhi</option>
+        <option value="Mumbai">Mumbai</option>
+      </select>
+
+      <label>Property Age: <span id="ageVal">5</span> years</label>
+      <input type="range" id="property_age" min="0" max="100" value="5">
+
+      <label>Parking</label>
+      <select id="has_parking">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+
+      <label>Distance to Metro: <span id="distVal">1.2</span> km</label>
+      <input type="range" id="distance_to_metro_km" min="0" max="20" value="1.2" step="0.1">
+    </div>
+
+    <div class="card">
+      <h3>Live Prediction</h3>
+
+      <div class="error" id="error"></div>
+
+      <div class="price" id="priceBox">₹-- lakhs</div>
+
+      <div class="gauge-bg">
+        <div class="gauge-fill" id="priceGauge"></div>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span>Price/sqft</span>
+          <strong id="pps">--</strong>
+        </div>
+        <div class="stat">
+          <span>Size/BHK</span>
+          <strong id="spb">--</strong>
+        </div>
+        <div class="stat">
+          <span>Class</span>
+          <strong id="priceClass">--</strong>
+        </div>
+      </div>
+
+      <h3 style="margin-top:25px;">Top Reasons</h3>
+      <div id="reasons"></div>
+
+      <h3 style="margin-top:25px;">Prediction Movement</h3>
+      <div class="mini-chart" id="miniChart"></div>
+    </div>
+
+  </div>
+
+  <script>
+    let timer = null;
+    let history = [];
+
+    const fields = [
+      "size_sqft",
+      "bedrooms",
+      "bathrooms",
+      "location",
+      "property_age",
+      "has_parking",
+      "distance_to_metro_km"
+    ];
+
+    fields.forEach(id => {
+      document.getElementById(id).addEventListener("input", schedulePrediction);
+      document.getElementById(id).addEventListener("change", schedulePrediction);
+    });
+
+    function updateLabels() {
+      document.getElementById("sizeVal").innerText = document.getElementById("size_sqft").value;
+      document.getElementById("bedVal").innerText = document.getElementById("bedrooms").value;
+      document.getElementById("bathVal").innerText = document.getElementById("bathrooms").value;
+      document.getElementById("ageVal").innerText = document.getElementById("property_age").value;
+      document.getElementById("distVal").innerText = document.getElementById("distance_to_metro_km").value;
+    }
+
+    function schedulePrediction() {
+      updateLabels();
+      clearTimeout(timer);
+      timer = setTimeout(predictPrice, 250);
+    }
+
+    async function predictPrice() {
+      const errorBox = document.getElementById("error");
+      const priceBox = document.getElementById("priceBox");
+      const reasonsBox = document.getElementById("reasons");
+
+      errorBox.style.display = "none";
+
+      const size = Number(document.getElementById("size_sqft").value);
+      const bedrooms = Number(document.getElementById("bedrooms").value);
+
+      if (size < bedrooms * 250) {
+        errorBox.innerHTML = "Invalid: Size too small for selected bedrooms.";
+        errorBox.style.display = "block";
+        priceBox.innerHTML = "₹-- lakhs";
+        reasonsBox.innerHTML = "";
+        return;
+      }
+
+      const payload = {
+        size_sqft: size,
+        bedrooms: bedrooms,
+        bathrooms: Number(document.getElementById("bathrooms").value),
+        location: document.getElementById("location").value,
+        property_age: Number(document.getElementById("property_age").value),
+        has_parking: Number(document.getElementById("has_parking").value),
+        distance_to_metro_km: Number(document.getElementById("distance_to_metro_km").value)
+      };
+
+      try {
+        const response = await fetch("/predict", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          errorBox.innerHTML = JSON.stringify(data.detail);
+          errorBox.style.display = "block";
+          return;
+        }
+
+        const price = Number(data.predicted_price_lakhs);
+
+        priceBox.innerHTML = `₹${price} lakhs`;
+        priceBox.classList.add("pulse");
+        setTimeout(() => priceBox.classList.remove("pulse"), 250);
+
+        updateGauge(price);
+        updateStats(price, size, bedrooms);
+        updateReasons(data.top_reasons || []);
+        updateMiniChart(price);
+
+      } catch (e) {
+        errorBox.innerHTML = "API not reachable. Server chalu hai kya?";
+        errorBox.style.display = "block";
+      }
+    }
+
+    function updateGauge(price) {
+      const maxPrice = 250;
+      const pct = Math.min((price / maxPrice) * 100, 100);
+      document.getElementById("priceGauge").style.width = pct + "%";
+    }
+
+    function updateStats(price, size, bedrooms) {
+      document.getElementById("pps").innerText = "₹" + Math.round((price * 100000) / size);
+      document.getElementById("spb").innerText = Math.round(size / bedrooms);
+
+      let cls = "Budget";
+      if (price > 120) cls = "Premium";
+      else if (price > 70) cls = "Mid";
+
+      document.getElementById("priceClass").innerText = cls;
+    }
+
+    function updateReasons(reasons) {
+      const reasonsBox = document.getElementById("reasons");
+      reasonsBox.innerHTML = "";
+
+      const maxImpact = Math.max(...reasons.map(r => Math.abs(r.impact)), 1);
+
+      reasons.forEach(reason => {
+        const pct = Math.min(Math.abs(reason.impact) / maxImpact * 100, 100);
+        const div = document.createElement("div");
+        div.className = "reason";
+
+        const sign = reason.impact >= 0 ? "+" : "";
+        const negClass = reason.impact < 0 ? "bar-negative" : "";
+
+        div.innerHTML = `
+          <div class="reason-title">
+            <span>${cleanFeatureName(reason.feature)}</span>
+            <span>${sign}${reason.impact}</span>
+          </div>
+          <div class="bar-bg">
+            <div class="bar-fill ${negClass}" style="width:${pct}%"></div>
+          </div>
+        `;
+
+        reasonsBox.appendChild(div);
+      });
+    }
+
+    function updateMiniChart(price) {
+      history.push(price);
+      if (history.length > 12) history.shift();
+
+      const chart = document.getElementById("miniChart");
+      chart.innerHTML = "";
+
+      const max = Math.max(...history, 1);
+
+      history.forEach(value => {
+        const bar = document.createElement("div");
+        bar.className = "chart-bar";
+        bar.style.height = Math.max((value / max) * 100, 5) + "%";
+        chart.appendChild(bar);
+      });
+    }
+
+    function cleanFeatureName(name) {
+      return name
+        .replace("num__", "")
+        .replace("cat__", "")
+        .replaceAll("_", " ");
+    }
+
+    updateLabels();
+    predictPrice();
+  </script>
+</body>
+</html>
